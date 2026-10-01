@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#20242c" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="application-name" content="漫画制作カレンダー" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <title>漫画制作カレンダー</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">MANGA WORK LOG</p>
+      <h1>漫画制作カレンダー</h1>
+    </div>
+    <div class="header-actions">
+      <button id="installBtn" class="button primary hidden" type="button">アプリ化</button>
+      <button id="todayBtn" class="button secondary">今日へ</button>
+      <button id="exportBtn" class="button secondary">バックアップ</button>
+      <label class="button secondary file-button">
+        復元
+        <input id="importInput" type="file" accept=".json,application/json" hidden />
+      </label>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <section class="intro-card">
+      <div>
+        <strong>日々の予定</strong>
+        <span>日付右の＋から予定を追加。進捗と1日の平均進捗を色分けします。</span>
+      </div>
+      <div class="intro-actions">
+        <div class="legend">
+          <span><i class="legend-dot schedule"></i> 詳細時間予定あり</span>
+          <span><i class="legend-dot weekend"></i> 土日</span>
+        </div>
+        <button id="addLongPlanBtn" class="button primary" type="button">＋ 長期の制作予定</button>
+      </div>
+    </section>
+
+    <section class="long-plan-panel">
+      <div class="long-plan-panel-title">
+        <strong>長期の制作予定</strong>
+        <span>登録した期間は、カレンダーの制作予定エリア左端を色付きで表示します。</span>
+      </div>
+      <div id="longPlanList" class="long-plan-list"></div>
+    </section>
+
+    <section class="calendar-shell">
+      <div id="calendarScroll" class="calendar-scroll">
+        <div id="calendarGrid" class="calendar-grid"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 日別詳細 -->
+  <dialog id="detailDialog" class="detail-dialog">
+    <div class="dialog-frame">
+      <div class="dialog-header">
+        <div>
+          <p class="eyebrow">DAILY SCHEDULE</p>
+          <h2 id="detailDateTitle">日付</h2>
+        </div>
+        <div class="dialog-header-actions">
+          <button id="addScheduleBtn" type="button" class="button primary">＋ 予定を追加</button>
+          <button id="closeDetailBtn" type="button" class="icon-button" aria-label="閉じる">×</button>
+        </div>
+      </div>
+
+      <div class="daily-summary">
+        <label>
+          今日のメモ
+          <textarea id="dailyMemo" rows="2" placeholder="例：8Pの表情を修正。明日は9Pから。"></textarea>
+        </label>
+      </div>
+
+      <div id="scheduleList" class="schedule-list"></div>
+
+      <div class="timeline-wrap">
+        <div class="timeline-title">
+          <span>07:00</span>
+          <strong>1日のタイムライン</strong>
+          <span>翌02:00</span>
+        </div>
+        <div id="visualTimeline" class="visual-timeline"></div>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- 時間予定の追加・編集 -->
+  <dialog id="scheduleEditor" class="schedule-editor">
+    <form id="scheduleForm" class="schedule-editor-card">
+      <div class="schedule-editor-head">
+        <h3 id="scheduleEditorTitle">予定を追加</h3>
+        <button id="cancelScheduleBtn" type="button" class="icon-button" aria-label="閉じる">×</button>
+      </div>
+
+      <input id="scheduleId" type="hidden" />
+
+      <div class="time-input-row">
+        <label>
+          開始
+          <input id="startTime" type="time" required value="20:00" />
+        </label>
+        <span>〜</span>
+        <label>
+          終了
+          <input id="endTime" type="time" required value="21:00" />
+        </label>
+      </div>
+
+      <label class="content-label">
+        内容
+        <input id="scheduleText" type="text" maxlength="120" placeholder="内容は空欄でもOK" />
+      </label>
+
+      <div class="schedule-editor-actions">
+        <button id="deleteScheduleBtn" type="button" class="button danger hidden">削除</button>
+        <div class="spacer"></div>
+        <button id="cancelScheduleBtn2" type="button" class="button secondary">キャンセル</button>
+        <button type="submit" class="button primary">保存</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- 日ごとの制作予定の追加・編集 -->
+  <dialog id="planEditor" class="plan-editor">
+    <form id="planForm" class="plan-editor-card">
+      <div class="schedule-editor-head">
+        <h3 id="planEditorTitle">制作予定を追加</h3>
+        <button id="cancelPlanBtn" type="button" class="icon-button" aria-label="閉じる">×</button>
+      </div>
+
+      <input id="planId" type="hidden" />
+
+      <label class="content-label first-field">
+        予定名
+        <input id="planName" type="text" required maxlength="40" placeholder="例：ネーム" />
+      </label>
+
+      <div class="amount-unit-row">
+        <label class="content-label amount-label">
+          数字
+          <input id="planAmount" class="short-number-input" type="number" required min="0" step="0.1" inputmode="decimal" placeholder="例：3" />
+        </label>
+
+        <label class="content-label unit-label">
+          単位
+          <input id="planUnit" class="unit-input" type="text" maxlength="12" placeholder="例：P、枚、時間" />
+        </label>
+      </div>
+
+      <div class="schedule-editor-actions">
+        <button id="deletePlanBtn" type="button" class="button danger hidden">削除</button>
+        <div class="spacer"></div>
+        <button id="cancelPlanBtn2" type="button" class="button secondary">キャンセル</button>
+        <button type="submit" class="button primary">決定</button>
+      </div>
+    </form>
+  </dialog>
+
+
+  <!-- 長期制作予定 -->
+  <dialog id="longPlanEditor" class="plan-editor">
+    <form id="longPlanForm" class="plan-editor-card">
+      <div class="schedule-editor-head">
+        <h3 id="longPlanEditorTitle">長期の制作予定を追加</h3>
+        <button id="cancelLongPlanBtn" type="button" class="icon-button" aria-label="閉じる">×</button>
+      </div>
+
+      <input id="longPlanId" type="hidden" />
+
+      <label class="content-label first-field">
+        題名
+        <input id="longPlanTitle" type="text" required maxlength="60" placeholder="例：新刊本文制作" />
+      </label>
+
+      <div class="date-range-row">
+        <label>
+          開始日
+          <input id="longPlanStart" type="date" required />
+        </label>
+        <span>〜</span>
+        <label>
+          終了日
+          <input id="longPlanEnd" type="date" required />
+        </label>
+      </div>
+
+      <div class="schedule-editor-actions">
+        <button id="deleteLongPlanBtn" type="button" class="button danger hidden">削除</button>
+        <div class="spacer"></div>
+        <button id="cancelLongPlanBtn2" type="button" class="button secondary">キャンセル</button>
+        <button type="submit" class="button primary">OK</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- 大事な日 -->
+  <dialog id="importantDayEditor" class="plan-editor">
+    <form id="importantDayForm" class="plan-editor-card">
+      <div class="schedule-editor-head">
+        <h3 id="importantDayEditorTitle">大事な日を追加</h3>
+        <button id="cancelImportantDayBtn" type="button" class="icon-button" aria-label="閉じる">×</button>
+      </div>
+
+      <input id="importantDayId" type="hidden" />
+
+      <label class="content-label first-field">
+        内容
+        <input id="importantDayText" type="text" required maxlength="60" placeholder="例：入稿日" />
+      </label>
+
+      <label class="content-label">
+        日付
+        <input id="importantDayDate" type="date" required />
+      </label>
+
+      <div class="schedule-editor-actions">
+        <button id="deleteImportantDayBtn" type="button" class="button danger hidden">削除</button>
+        <div class="spacer"></div>
+        <button id="cancelImportantDayBtn2" type="button" class="button secondary">キャンセル</button>
+        <button type="submit" class="button primary">OK</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
