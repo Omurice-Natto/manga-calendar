@@ -106,12 +106,12 @@
       <div class="time-input-row">
         <label>
           開始
-          <input id="startTime" type="time" required value="20:00" />
+          <input id="startTime" type="time" required value="21:00" />
         </label>
         <span>〜</span>
         <label>
           終了
-          <input id="endTime" type="time" required value="21:00" />
+          <input id="endTime" type="time" required value="23:00" />
         </label>
       </div>
 
@@ -119,6 +119,32 @@
         内容
         <input id="scheduleText" type="text" maxlength="120" placeholder="内容は空欄でもOK" />
       </label>
+
+      <div class="schedule-color-field">
+        <span class="schedule-color-label">色</span>
+        <div class="schedule-color-options" role="radiogroup" aria-label="予定の色">
+          <label class="schedule-color-option">
+            <input type="radio" name="scheduleColor" value="navy" checked />
+            <span class="schedule-color-swatch color-navy"></span>
+            <span>紺</span>
+          </label>
+          <label class="schedule-color-option">
+            <input type="radio" name="scheduleColor" value="green" />
+            <span class="schedule-color-swatch color-green"></span>
+            <span>緑</span>
+          </label>
+          <label class="schedule-color-option">
+            <input type="radio" name="scheduleColor" value="orange" />
+            <span class="schedule-color-swatch color-orange"></span>
+            <span>橙</span>
+          </label>
+          <label class="schedule-color-option">
+            <input type="radio" name="scheduleColor" value="purple" />
+            <span class="schedule-color-swatch color-purple"></span>
+            <span>紫</span>
+          </label>
+        </div>
+      </div>
 
       <div class="schedule-editor-actions">
         <button id="deleteScheduleBtn" type="button" class="button danger hidden">削除</button>

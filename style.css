@@ -18,6 +18,15 @@
   --today: #eceff6;
   --event-bg: #eef2f8;
   --event-line: #66768e;
+
+  --schedule-navy-line: #66768e;
+  --schedule-navy-bg: #eef2f8;
+  --schedule-green-line: #4c9270;
+  --schedule-green-bg: #edf7f1;
+  --schedule-orange-line: #c9823b;
+  --schedule-orange-bg: #fff4e8;
+  --schedule-purple-line: #7c65a8;
+  --schedule-purple-bg: #f3effa;
   --shadow: 0 16px 40px rgba(25, 32, 45, 0.08);
   --timeline-hour: 64px;
 }
@@ -289,6 +298,10 @@ h3 { font-size: 18px; }
 
 .important-day-add:hover {
   background: var(--soft);
+}
+
+.important-label-mobile {
+  display: none;
 }
 
 .grid-header .plans-heading {
@@ -920,6 +933,98 @@ h3 { font-size: 18px; }
   outline: none;
 }
 
+
+.schedule-color-field {
+  margin-top: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.schedule-color-label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.schedule-color-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.schedule-color-option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.schedule-color-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.schedule-color-option:has(input:checked) {
+  border-color: #8f98a8;
+  box-shadow: 0 0 0 2px rgba(110, 120, 138, 0.10);
+}
+
+.schedule-color-swatch {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  border-radius: 4px;
+}
+
+.schedule-color-swatch.color-navy { background: var(--schedule-navy-line); }
+.schedule-color-swatch.color-green { background: var(--schedule-green-line); }
+.schedule-color-swatch.color-orange { background: var(--schedule-orange-line); }
+.schedule-color-swatch.color-purple { background: var(--schedule-purple-line); }
+
+/* 詳細時間予定の色 */
+.event-overlay.schedule-color-navy .event-range { background: var(--schedule-navy-line); }
+.event-overlay.schedule-color-navy .event-card {
+  border-color: color-mix(in srgb, var(--schedule-navy-line) 32%, #ffffff);
+  border-left-color: var(--schedule-navy-line);
+  background: var(--schedule-navy-bg);
+}
+
+.event-overlay.schedule-color-green .event-range { background: var(--schedule-green-line); }
+.event-overlay.schedule-color-green .event-card {
+  border-color: color-mix(in srgb, var(--schedule-green-line) 32%, #ffffff);
+  border-left-color: var(--schedule-green-line);
+  background: var(--schedule-green-bg);
+}
+
+.event-overlay.schedule-color-orange .event-range { background: var(--schedule-orange-line); }
+.event-overlay.schedule-color-orange .event-card {
+  border-color: color-mix(in srgb, var(--schedule-orange-line) 32%, #ffffff);
+  border-left-color: var(--schedule-orange-line);
+  background: var(--schedule-orange-bg);
+}
+
+.event-overlay.schedule-color-purple .event-range { background: var(--schedule-purple-line); }
+.event-overlay.schedule-color-purple .event-card {
+  border-color: color-mix(in srgb, var(--schedule-purple-line) 32%, #ffffff);
+  border-left-color: var(--schedule-purple-line);
+  background: var(--schedule-purple-bg);
+}
+
+/* 一覧側にも色を出す */
+.schedule-card.schedule-color-navy { border-left: 4px solid var(--schedule-navy-line); padding-left: 8px; }
+.schedule-card.schedule-color-green { border-left: 4px solid var(--schedule-green-line); padding-left: 8px; }
+.schedule-card.schedule-color-orange { border-left: 4px solid var(--schedule-orange-line); padding-left: 8px; }
+.schedule-card.schedule-color-purple { border-left: 4px solid var(--schedule-purple-line); padding-left: 8px; }
+
 .schedule-editor-actions {
   margin-top: 20px;
   display: flex;
@@ -1064,16 +1169,47 @@ h3 { font-size: 18px; }
     width: 100%;
   }
 
-  /* スマホでは見出し行を隠して、1日1カードにする */
+  /* スマホでもPCと同じく「日付が左 / 制作予定が右」の2列表示 */
   .grid-header {
+    display: grid;
+    grid-template-columns: 118px minmax(0, 1fr);
+    min-width: 0;
+    min-height: 34px;
+  }
+
+  .grid-header > div {
+    min-height: 34px;
+    font-size: 10px;
+  }
+
+  .grid-header .date-heading {
+    padding: 0 4px 0 6px;
+  }
+
+  .grid-header .plans-heading {
+    padding-left: 7px;
+    font-size: 10px;
+  }
+
+  .important-day-add {
+    padding: 3px 4px;
+    font-size: 8px;
+  }
+
+  .important-label-desktop {
     display: none;
   }
 
+  .important-label-mobile {
+    display: inline;
+  }
+
   .date-row {
-    display: block;
-    min-height: 0;
+    display: grid;
+    grid-template-columns: 118px minmax(0, 1fr);
+    min-height: 72px;
     margin: 0;
-    border-bottom: 5px solid var(--bg);
+    border-bottom: 1px solid var(--line);
     background: white;
   }
 
@@ -1081,19 +1217,24 @@ h3 { font-size: 18px; }
     border-bottom-width: 0;
   }
 
+  /* 左側：日付 → 大事な日 → 総合進捗＋追加 */
   .date-area {
-    min-height: 54px;
-    grid-template-columns: 92px 1fr;
-    grid-template-rows: 1fr 1fr;
-    column-gap: 5px;
-    padding: 4px 6px 4px 8px;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
+    min-width: 0;
+    min-height: 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 3px;
+    padding: 5px 6px;
+    border-right: 1px solid var(--line);
+    border-bottom: 0;
   }
 
   .date-cell {
-    min-height: 44px;
-    padding: 3px 2px;
+    min-height: 0;
+    padding: 1px 2px;
+    flex: 0 0 auto;
   }
 
   .date-cell strong {
@@ -1101,22 +1242,31 @@ h3 { font-size: 18px; }
   }
 
   .date-cell span {
+    margin-top: 1px;
     font-size: 9px;
   }
 
   .date-side-top {
-    justify-content: flex-end;
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    justify-content: flex-start;
     gap: 3px;
+    overflow: hidden;
   }
 
   .important-day-label {
-    max-width: 150px;
-    padding: 2px 5px;
-    font-size: 9px;
+    max-width: 100%;
+    padding: 2px 4px;
+    font-size: 8px;
   }
 
   .date-side-bottom {
-    gap: 5px;
+    width: 100%;
+    margin-top: auto;
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
   }
 
   .day-progress-badge {
@@ -1126,16 +1276,19 @@ h3 { font-size: 18px; }
   }
 
   .day-add-button {
-    width: 30px;
-    height: 30px;
-    font-size: 19px;
+    width: 27px;
+    height: 27px;
+    font-size: 18px;
   }
 
+  /* 右側：その日の制作予定 */
   .plans-area {
+    min-width: 0;
     display: grid;
     grid-template-columns: 1fr;
+    align-content: start;
     gap: 5px;
-    min-height: 37px;
+    min-height: 72px;
     padding: 5px 6px;
     overflow: visible;
   }
@@ -1152,12 +1305,13 @@ h3 { font-size: 18px; }
 
   .plan-card {
     width: 100%;
+    min-width: 0;
     flex: none;
-    min-height: 48px;
-    padding: 6px 8px;
-    grid-template-columns: 1fr 84px;
+    min-height: 54px;
+    padding: 6px 7px;
+    grid-template-columns: minmax(0, 1fr) 72px;
     grid-template-rows: auto 1fr;
-    gap: 3px 8px;
+    gap: 3px 6px;
     border-radius: 8px;
   }
 
@@ -1352,11 +1506,17 @@ h3 { font-size: 18px; }
     font-size: 9px;
   }
 
+  .grid-header,
+  .date-row {
+    grid-template-columns: 108px minmax(0, 1fr);
+  }
+
   .date-area {
-    grid-template-columns: 84px 1fr;
+    padding-left: 5px;
+    padding-right: 5px;
   }
 
   .important-day-label {
-    max-width: 125px;
+    max-width: 100%;
   }
 }

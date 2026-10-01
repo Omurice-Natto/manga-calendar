@@ -1,7 +1,9 @@
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "mangaCalendarPersonalV10";
+  const STORAGE_KEY = "mangaCalendarPersonalV12";
+  const OLD_PERSONAL_V11_KEY = "mangaCalendarPersonalV11";
+  const OLD_PERSONAL_V10_KEY = "mangaCalendarPersonalV10";
   const OLD_V9_KEY = "mangaCalendarPrototypeV9";
   const OLD_V8_KEY = "mangaCalendarPrototypeV8";
   const OLD_V7_KEY = "mangaCalendarPrototypeV7";
@@ -102,7 +104,7 @@
 
   function createEmptyState() {
     return {
-      version: 10,
+      version: 12,
       daily: {},
       longPlans: [],
       importantDays: []
@@ -120,12 +122,16 @@
       }
     });
 
-    target.version = 10;
+    target.version = 12;
 
     Object.values(target.daily).forEach((record) => {
       if (!Array.isArray(record.plans)) record.plans = [];
       if (!Array.isArray(record.schedules)) record.schedules = [];
       if (typeof record.memo !== "string") record.memo = "";
+
+      record.schedules.forEach((schedule) => {
+        if (!schedule.color) schedule.color = "navy";
+      });
 
       record.plans.forEach((plan) => {
         if (typeof plan.unit !== "string") plan.unit = "";
@@ -155,6 +161,22 @@
         const parsed = JSON.parse(raw);
         normalizeState(parsed);
         return parsed;
+      }
+
+      const oldPersonalV11 = localStorage.getItem(OLD_PERSONAL_V11_KEY);
+      if (oldPersonalV11) {
+        const migrated = JSON.parse(oldPersonalV11);
+        normalizeState(migrated);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+        return migrated;
+      }
+
+      const oldPersonalV10 = localStorage.getItem(OLD_PERSONAL_V10_KEY);
+      if (oldPersonalV10) {
+        const migrated = JSON.parse(oldPersonalV10);
+        normalizeState(migrated);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+        return migrated;
       }
 
       const oldV9 = localStorage.getItem(OLD_V9_KEY);
@@ -284,7 +306,7 @@
     const importantButton = document.createElement("button");
     importantButton.type = "button";
     importantButton.className = "important-day-add";
-    importantButton.textContent = "＋ 大事な日";
+    importantButton.innerHTML = '<span class="important-label-desktop">＋ 大事な日</span><span class="important-label-mobile">＋重要</span>';
     importantButton.addEventListener("click", () => openImportantDayEditor());
 
     dateHeading.appendChild(dateTitle);
@@ -399,7 +421,7 @@
 
     const dayProgress = document.createElement("div");
     dayProgress.className = "day-progress-badge";
-    applyDayProgressBadge(dayProgress, record.plans);
+    applyDayProgressBadge(dayProgress, record.plans, key);
 
     const addButton = document.createElement("button");
     addButton.type = "button";
@@ -452,9 +474,16 @@
     return row;
   }
 
-  function progressClass(value) {
+  function progressClass(value, key = null) {
     const p = Number(value) || 0;
-    if (p <= 0) return "progress-none";
+
+    // 0%は今日・未来なら未着手として無色。
+    // 昨日以前で0%のままなら未達として赤。
+    if (p <= 0) {
+      if (key && key < dateKey(new Date())) return "progress-red";
+      return "progress-none";
+    }
+
     if (p >= 80) return "progress-green";
     if (p >= 51) return "progress-yellow";
     return "progress-red";
@@ -466,7 +495,7 @@
     return Math.round(total / plans.length);
   }
 
-  function applyDayProgressBadge(badge, plans) {
+  function applyDayProgressBadge(badge, plans, key = null) {
     badge.classList.remove("progress-none", "progress-red", "progress-yellow", "progress-green");
     const average = averageDayProgress(plans);
 
@@ -477,7 +506,7 @@
     }
 
     badge.textContent = `${average}%`;
-    badge.classList.add(progressClass(average));
+    badge.classList.add(progressClass(average, key));
   }
 
   function updateDayProgressBadge(key) {
@@ -485,12 +514,12 @@
     if (!row) return;
     const badge = row.querySelector(".day-progress-badge");
     if (!badge) return;
-    applyDayProgressBadge(badge, getDailyRecord(key).plans);
+    applyDayProgressBadge(badge, getDailyRecord(key).plans, key);
   }
 
   function createPlanCard(key, plan) {
     const card = document.createElement("div");
-    card.className = `plan-card ${progressClass(plan.progress)}`;
+    card.className = `plan-card ${progressClass(plan.progress, key)}`;
 
     const nameButton = document.createElement("button");
     nameButton.type = "button";
@@ -533,7 +562,7 @@
     select.addEventListener("change", () => {
       plan.progress = Number(select.value);
       card.classList.remove("progress-none", "progress-red", "progress-yellow", "progress-green");
-      card.classList.add(progressClass(plan.progress));
+      card.classList.add(progressClass(plan.progress, key));
       updateDayProgressBadge(key);
       saveState();
     });
@@ -936,7 +965,7 @@
 
     schedules.forEach((event) => {
       const card = document.createElement("div");
-      card.className = "schedule-card";
+      card.className = `schedule-card schedule-color-${event.color ?? "navy"}`;
       card.innerHTML = `
         <div class="schedule-time">${event.start} 〜 ${event.end}</div>
         <div class="schedule-content"></div>
@@ -982,7 +1011,7 @@
         const height = Math.max(28, (endMin - startMin) * PIXELS_PER_MINUTE);
 
         const overlay = document.createElement("div");
-        overlay.className = "event-overlay";
+        overlay.className = `event-overlay schedule-color-${event.color ?? "navy"}`;
         overlay.style.top = `${top}px`;
         overlay.style.height = `${height}px`;
 
@@ -1013,9 +1042,15 @@
 
     scheduleEditorTitle.textContent = event ? "予定を編集" : "予定を追加";
     scheduleId.value = event?.id ?? "";
-    startTime.value = event?.start ?? "20:00";
-    endTime.value = event?.end ?? "21:00";
+    startTime.value = event?.start ?? "21:00";
+    endTime.value = event?.end ?? "23:00";
     scheduleText.value = event?.text ?? "";
+
+    const selectedColor = event?.color ?? "navy";
+    document.querySelectorAll('input[name="scheduleColor"]').forEach((radio) => {
+      radio.checked = radio.value === selectedColor;
+    });
+
     deleteScheduleBtn.classList.toggle("hidden", !event);
 
     scheduleEditor.showModal();
@@ -1032,6 +1067,7 @@
     const start = startTime.value;
     const end = endTime.value;
     const text = scheduleText.value.trim();
+    const color = document.querySelector('input[name="scheduleColor"]:checked')?.value ?? "navy";
 
     if (!start || !end) return;
 
@@ -1052,12 +1088,14 @@
       existing.start = start;
       existing.end = end;
       existing.text = text;
+      existing.color = color;
     } else {
       record.schedules.push({
         id: uid("schedule"),
         start,
         end,
-        text
+        text,
+        color
       });
     }
 
