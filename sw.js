@@ -1,4 +1,4 @@
-const CACHE_NAME = "manga-calendar-v12-static";
+const CACHE_NAME = "manga-calendar-v13-static";
 const ASSET_PATHS = [
   "./",
   "./index.html",

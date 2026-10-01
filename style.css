@@ -619,6 +619,7 @@ h3 { font-size: 18px; }
   padding: 0;
   border: 0;
   border-radius: 16px;
+  overflow: hidden;
   box-shadow: 0 30px 90px rgba(20, 25, 34, 0.28);
 }
 
@@ -631,7 +632,10 @@ h3 { font-size: 18px; }
 
 .dialog-frame {
   max-height: calc(100vh - 28px);
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
   background: white;
 }
 
@@ -863,7 +867,66 @@ h3 { font-size: 18px; }
   font-weight: 700;
 }
 
-.time-input-row input,
+.digital-time-input {
+  min-width: 0;
+  height: 42px;
+  display: grid;
+  grid-template-columns: minmax(78px, 1fr) auto 62px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: white;
+}
+
+.digital-time-input select,
+.digital-time-input input {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  padding: 0 6px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  outline: none;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: center;
+}
+
+.digital-time-input select {
+  cursor: pointer;
+}
+
+.minute-input {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.minute-input::-webkit-inner-spin-button,
+.minute-input::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+.time-colon {
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.time-input-note {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.timeline-end-label {
+  transform: translateY(-100%);
+  font-weight: 800;
+}
+
 .content-label input {
   height: 42px;
   padding: 0 10px;
@@ -1349,6 +1412,12 @@ h3 { font-size: 18px; }
   .dialog-frame {
     height: 100dvh;
     max-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    scroll-padding-bottom: 120px;
   }
 
   .dialog-header {
@@ -1405,7 +1474,7 @@ h3 { font-size: 18px; }
   }
 
   .timeline-wrap {
-    padding: 10px 8px max(18px, env(safe-area-inset-bottom));
+    padding: 10px 8px max(110px, calc(90px + env(safe-area-inset-bottom)));
   }
 
   .timeline-title {
@@ -1468,7 +1537,32 @@ h3 { font-size: 18px; }
     gap: 6px;
   }
 
-  .time-input-row input,
+  .digital-time-row {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+
+  .digital-time-input {
+    height: 40px;
+    grid-template-columns: minmax(60px, 1fr) auto 48px;
+    gap: 3px;
+    padding: 0 5px;
+  }
+
+  .digital-time-input select,
+  .digital-time-input input {
+    height: 32px;
+    padding: 0 3px;
+    font-size: 14px;
+  }
+
+  .time-range-separator {
+    padding-bottom: 10px;
+  }
+
+  .time-input-note {
+    font-size: 9px;
+  }
+
   .content-label input,
   .date-range-row input {
     height: 40px;

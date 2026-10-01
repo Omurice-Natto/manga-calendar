@@ -1,7 +1,8 @@
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "mangaCalendarPersonalV12";
+  const STORAGE_KEY = "mangaCalendarPersonalV13";
+  const OLD_PERSONAL_V12_KEY = "mangaCalendarPersonalV12";
   const OLD_PERSONAL_V11_KEY = "mangaCalendarPersonalV11";
   const OLD_PERSONAL_V10_KEY = "mangaCalendarPersonalV10";
   const OLD_V9_KEY = "mangaCalendarPrototypeV9";
@@ -43,8 +44,10 @@
   const scheduleForm = document.getElementById("scheduleForm");
   const scheduleEditorTitle = document.getElementById("scheduleEditorTitle");
   const scheduleId = document.getElementById("scheduleId");
-  const startTime = document.getElementById("startTime");
-  const endTime = document.getElementById("endTime");
+  const startHour = document.getElementById("startHour");
+  const startMinute = document.getElementById("startMinute");
+  const endHour = document.getElementById("endHour");
+  const endMinute = document.getElementById("endMinute");
   const scheduleText = document.getElementById("scheduleText");
   const cancelScheduleBtn = document.getElementById("cancelScheduleBtn");
   const cancelScheduleBtn2 = document.getElementById("cancelScheduleBtn2");
@@ -104,7 +107,7 @@
 
   function createEmptyState() {
     return {
-      version: 12,
+      version: 13,
       daily: {},
       longPlans: [],
       importantDays: []
@@ -122,7 +125,7 @@
       }
     });
 
-    target.version = 12;
+    target.version = 13;
 
     Object.values(target.daily).forEach((record) => {
       if (!Array.isArray(record.plans)) record.plans = [];
@@ -161,6 +164,14 @@
         const parsed = JSON.parse(raw);
         normalizeState(parsed);
         return parsed;
+      }
+
+      const oldPersonalV12 = localStorage.getItem(OLD_PERSONAL_V12_KEY);
+      if (oldPersonalV12) {
+        const migrated = JSON.parse(oldPersonalV12);
+        normalizeState(migrated);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+        return migrated;
       }
 
       const oldPersonalV11 = localStorage.getItem(OLD_PERSONAL_V11_KEY);
@@ -913,6 +924,42 @@
     saveState();
   });
 
+  function clampMinute(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return 0;
+    return Math.max(0, Math.min(59, Math.trunc(n)));
+  }
+
+  function setDigitalTimeFields(kind, value) {
+    const [rawH, rawM] = String(value || "00:00").split(":").map(Number);
+    let absoluteHour = rawH;
+    if (absoluteHour < 7) absoluteHour += 24;
+
+    const hourField = kind === "start" ? startHour : endHour;
+    const minuteField = kind === "start" ? startMinute : endMinute;
+
+    hourField.value = String(Math.max(7, Math.min(26, absoluteHour)));
+    minuteField.value = String(clampMinute(rawM));
+  }
+
+  function getDigitalTimeValue(kind) {
+    const hourField = kind === "start" ? startHour : endHour;
+    const minuteField = kind === "start" ? startMinute : endMinute;
+
+    const absoluteHour = Number(hourField.value);
+    const minute = clampMinute(minuteField.value);
+    minuteField.value = String(minute);
+
+    const clockHour = ((absoluteHour % 24) + 24) % 24;
+    return `${String(clockHour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+  }
+
+  function formatScheduleClock(value) {
+    const [h, m] = String(value).split(":").map(Number);
+    const prefix = h < 7 ? "翌" : "";
+    return `${prefix}${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  }
+
   function timeToMinutes(value) {
     const [h, m] = value.split(":").map(Number);
     return h * 60 + m;
@@ -967,7 +1014,7 @@
       const card = document.createElement("div");
       card.className = `schedule-card schedule-color-${event.color ?? "navy"}`;
       card.innerHTML = `
-        <div class="schedule-time">${event.start} 〜 ${event.end}</div>
+        <div class="schedule-time">${formatScheduleClock(event.start)} 〜 ${formatScheduleClock(event.end)}</div>
         <div class="schedule-content"></div>
         <button class="mini-button" type="button">編集</button>
       `;
@@ -990,13 +1037,17 @@
       line.style.top = `${top}px`;
       visualTimeline.appendChild(line);
 
-      if (hour < 26) {
-        const label = document.createElement("div");
-        label.className = "hour-label";
-        label.style.top = `${top}px`;
-        label.textContent = `${String(hour % 24).padStart(2, "0")}:00`;
-        visualTimeline.appendChild(label);
-      }
+      const label = document.createElement("div");
+      label.className = "hour-label";
+      if (hour === 26) label.classList.add("timeline-end-label");
+      label.style.top = `${top}px`;
+
+      const clockHour = hour % 24;
+      label.textContent = hour >= 24
+        ? `翌${String(clockHour).padStart(2, "0")}:00`
+        : `${String(clockHour).padStart(2, "0")}:00`;
+
+      visualTimeline.appendChild(label);
     }
 
     const rail = document.createElement("div");
@@ -1021,7 +1072,7 @@
         const card = document.createElement("div");
         card.className = "event-card";
         card.innerHTML = `
-          <span class="event-time">${event.start} 〜 ${event.end}</span>
+          <span class="event-time">${formatScheduleClock(event.start)} 〜 ${formatScheduleClock(event.end)}</span>
           <span class="event-text"></span>
         `;
         card.querySelector(".event-text").textContent = event.text;
@@ -1042,8 +1093,8 @@
 
     scheduleEditorTitle.textContent = event ? "予定を編集" : "予定を追加";
     scheduleId.value = event?.id ?? "";
-    startTime.value = event?.start ?? "21:00";
-    endTime.value = event?.end ?? "23:00";
+    setDigitalTimeFields("start", event?.start ?? "21:00");
+    setDigitalTimeFields("end", event?.end ?? "23:00");
     scheduleText.value = event?.text ?? "";
 
     const selectedColor = event?.color ?? "navy";
@@ -1064,8 +1115,8 @@
     event.preventDefault();
     if (!activeDetailDate) return;
 
-    const start = startTime.value;
-    const end = endTime.value;
+    const start = getDigitalTimeValue("start");
+    const end = getDigitalTimeValue("end");
     const text = scheduleText.value.trim();
     const color = document.querySelector('input[name="scheduleColor"]:checked')?.value ?? "navy";
 

@@ -103,17 +103,68 @@
 
       <input id="scheduleId" type="hidden" />
 
-      <div class="time-input-row">
+      <div class="time-input-row digital-time-row">
         <label>
           開始
-          <input id="startTime" type="time" required value="21:00" />
+          <div class="digital-time-input">
+            <select id="startHour" aria-label="開始時">
+              <option value="7">07</option>
+            <option value="8">08</option>
+            <option value="9">09</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
+            <option value="21">21</option>
+            <option value="22">22</option>
+            <option value="23">23</option>
+            <option value="24">翌00</option>
+            <option value="25">翌01</option>
+            <option value="26">翌02</option>
+            </select>
+            <span class="time-colon">:</span>
+            <input id="startMinute" class="minute-input" type="number" min="0" max="59" step="1" inputmode="numeric" value="0" aria-label="開始分" />
+          </div>
         </label>
-        <span>〜</span>
+        <span class="time-range-separator">〜</span>
         <label>
           終了
-          <input id="endTime" type="time" required value="23:00" />
+          <div class="digital-time-input">
+            <select id="endHour" aria-label="終了時">
+              <option value="7">07</option>
+            <option value="8">08</option>
+            <option value="9">09</option>
+            <option value="10">10</option>
+            <option value="11">11</option>
+            <option value="12">12</option>
+            <option value="13">13</option>
+            <option value="14">14</option>
+            <option value="15">15</option>
+            <option value="16">16</option>
+            <option value="17">17</option>
+            <option value="18">18</option>
+            <option value="19">19</option>
+            <option value="20">20</option>
+            <option value="21">21</option>
+            <option value="22">22</option>
+            <option value="23">23</option>
+            <option value="24">翌00</option>
+            <option value="25">翌01</option>
+            <option value="26">翌02</option>
+            </select>
+            <span class="time-colon">:</span>
+            <input id="endMinute" class="minute-input" type="number" min="0" max="59" step="1" inputmode="numeric" value="0" aria-label="終了分" />
+          </div>
         </label>
       </div>
+      <p class="time-input-note">翌0:00〜翌2:00も入力できます</p>
 
       <label class="content-label">
         内容
