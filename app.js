@@ -44,10 +44,8 @@
   const scheduleForm = document.getElementById("scheduleForm");
   const scheduleEditorTitle = document.getElementById("scheduleEditorTitle");
   const scheduleId = document.getElementById("scheduleId");
-  const startHour = document.getElementById("startHour");
-  const startMinute = document.getElementById("startMinute");
-  const endHour = document.getElementById("endHour");
-  const endMinute = document.getElementById("endMinute");
+  const startTime = document.getElementById("startTime");
+  const endTime = document.getElementById("endTime");
   const scheduleText = document.getElementById("scheduleText");
   const cancelScheduleBtn = document.getElementById("cancelScheduleBtn");
   const cancelScheduleBtn2 = document.getElementById("cancelScheduleBtn2");
@@ -924,45 +922,19 @@
     saveState();
   });
 
-  function clampMinute(value) {
-    const n = Number(value);
-    if (!Number.isFinite(n)) return 0;
-    return Math.max(0, Math.min(59, Math.trunc(n)));
-  }
-
-  function setDigitalTimeFields(kind, value) {
-    const [rawH, rawM] = String(value || "00:00").split(":").map(Number);
-    let absoluteHour = rawH;
-    if (absoluteHour < 7) absoluteHour += 24;
-
-    const hourField = kind === "start" ? startHour : endHour;
-    const minuteField = kind === "start" ? startMinute : endMinute;
-
-    hourField.value = String(Math.max(7, Math.min(26, absoluteHour)));
-    minuteField.value = String(clampMinute(rawM));
-  }
-
-  function getDigitalTimeValue(kind) {
-    const hourField = kind === "start" ? startHour : endHour;
-    const minuteField = kind === "start" ? startMinute : endMinute;
-
-    const absoluteHour = Number(hourField.value);
-    const minute = clampMinute(minuteField.value);
-    minuteField.value = String(minute);
-
-    const clockHour = ((absoluteHour % 24) + 24) % 24;
-    return `${String(clockHour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-  }
-
-  function formatScheduleClock(value) {
-    const [h, m] = String(value).split(":").map(Number);
-    const prefix = h < 7 ? "翌" : "";
-    return `${prefix}${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-  }
-
   function timeToMinutes(value) {
     const [h, m] = value.split(":").map(Number);
     return h * 60 + m;
+  }
+
+  function displayExtendedTime(value) {
+    if (!value) return "";
+    const [hourText, minuteText] = value.split(":");
+    let hour = Number(hourText);
+    const minute = minuteText ?? "00";
+
+    if (hour < 7) hour += 24;
+    return `${String(hour).padStart(2, "0")}:${minute}`;
   }
 
   function normalizeTimeRange(start, end) {
@@ -1014,7 +986,7 @@
       const card = document.createElement("div");
       card.className = `schedule-card schedule-color-${event.color ?? "navy"}`;
       card.innerHTML = `
-        <div class="schedule-time">${formatScheduleClock(event.start)} 〜 ${formatScheduleClock(event.end)}</div>
+        <div class="schedule-time">${displayExtendedTime(event.start)} 〜 ${displayExtendedTime(event.end)}</div>
         <div class="schedule-content"></div>
         <button class="mini-button" type="button">編集</button>
       `;
@@ -1039,14 +1011,8 @@
 
       const label = document.createElement("div");
       label.className = "hour-label";
-      if (hour === 26) label.classList.add("timeline-end-label");
       label.style.top = `${top}px`;
-
-      const clockHour = hour % 24;
-      label.textContent = hour >= 24
-        ? `翌${String(clockHour).padStart(2, "0")}:00`
-        : `${String(clockHour).padStart(2, "0")}:00`;
-
+      label.textContent = `${String(hour).padStart(2, "0")}:00`;
       visualTimeline.appendChild(label);
     }
 
@@ -1072,7 +1038,7 @@
         const card = document.createElement("div");
         card.className = "event-card";
         card.innerHTML = `
-          <span class="event-time">${formatScheduleClock(event.start)} 〜 ${formatScheduleClock(event.end)}</span>
+          <span class="event-time">${displayExtendedTime(event.start)} 〜 ${displayExtendedTime(event.end)}</span>
           <span class="event-text"></span>
         `;
         card.querySelector(".event-text").textContent = event.text;
@@ -1093,8 +1059,8 @@
 
     scheduleEditorTitle.textContent = event ? "予定を編集" : "予定を追加";
     scheduleId.value = event?.id ?? "";
-    setDigitalTimeFields("start", event?.start ?? "21:00");
-    setDigitalTimeFields("end", event?.end ?? "23:00");
+    startTime.value = event?.start ?? "21:00";
+    endTime.value = event?.end ?? "23:00";
     scheduleText.value = event?.text ?? "";
 
     const selectedColor = event?.color ?? "navy";
@@ -1115,8 +1081,8 @@
     event.preventDefault();
     if (!activeDetailDate) return;
 
-    const start = getDigitalTimeValue("start");
-    const end = getDigitalTimeValue("end");
+    const start = startTime.value;
+    const end = endTime.value;
     const text = scheduleText.value.trim();
     const color = document.querySelector('input[name="scheduleColor"]:checked')?.value ?? "navy";
 
